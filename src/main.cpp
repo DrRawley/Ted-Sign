@@ -17,7 +17,7 @@
 float micBaseLevel = 3.0;
 float micScalingFactor = 10.0;
 
-#define NUM_LEDS 31
+#define NUM_LEDS 39
 // #define BRIGHTNESS  64
 CRGB leds[NUM_LEDS];
 
@@ -35,90 +35,90 @@ const int sizeLetter2 = 15;
 const int sizeLetter3 = 14;
 
 // Define LEDs per row
-const int numRows = 5;
-const int rows[numRows][11] = {
-    {7, 8, 9, 15, 16, 17, 18, 19, 27, 28, 29}, // 11
-    {6, 10, 14, 26, 30},                       // 5
-    {5, 13, 25},                               // 3
-    {4, 0, 12, 24, 20},                        // 5
-    {3, 2, 1, 11, 23, 22, 21}                  // 7
-};
-const int rowSizes[numRows] = {11, 5, 3, 5, 7};
+const int numRows = 6;
+const int rows[numRows][9] = {
+    {0, 21, 22, 23, 24, 33, 32, 31, 30},
+    {1, 20, 34, 29},
+    {2, 19, 10, 11, 12, 13, 35, 28},
+    {3, 18, 14, 36, 37, 38, 27},
+    {4, 17, 16, 15, 26},
+    {5, 6, 7, 8, 9, 25}};
+const int rowSizes[numRows] = {9, 4, 8, 7, 5, 6};
 
 // Define Leds per column
 const int numColumns = 17;
 const int columns[numColumns][6] = {
-    {4, 5, 6},
-    {3, 7},
-    {2, 8},
-    {1, 9},
-    {0, 10},
+    {5},
+    {6},
+    {7, 4, 3, 2, 1, 0},
+    {8},
+    {9},
     {},
-    {15},
-    {16},
-    {11, 12, 13, 14, 17},
-    {18},
-    {19},
+    {18, 19, 20},
+    {17, 10, 21},
+    {16, 11, 22},
+    {15, 12, 23},
+    {14, 13, 24},
     {},
-    {24, 25, 26},
-    {23, 27},
-    {22, 28},
-    {21, 29},
-    {20, 30}};
-const int colSizes[numColumns] = {3, 2, 2, 2, 2, 0, 1, 1, 5, 1, 1, 0, 3, 2, 2, 2, 2};
+    {35, 34},
+    {36, 33},
+    {37, 32},
+    {38, 31},
+    {25, 26, 27, 28, 29, 30}};
+const int colSizes[numColumns] = {1, 1, 6, 1, 1, 0, 3, 3, 3, 3, 3, 0, 2, 2, 2, 2, 6};
 
 // Define LEDs per Diagonal
-const int numDiags = 21;
-const int diags[numDiags][3] = {
-    {},           // 0
-    {3, 4},       // 1
-    {2, 5},       // 2
-    {1, 6},       // 3
-    {},           // 4
-    {0, 7},       // 5
-    {8},          // 6
-    {9, 10},      // 7
-    {11},         // 8
-    {12},         // 9
-    {13, 15},     // 10
-    {14, 16},     // 11
-    {17},         // 12
-    {18, 23, 24}, // 13
-    {19, 22, 25}, // 14
-    {21, 26},     // 15
-    {},           // 16
-    {20, 27},     // 17
-    {28},         // 18
-    {29, 30},     // 19
-    {}            // 20
-};
-const int diagsSizes[numDiags] = {0, 2, 2, 2, 0, 2, 1, 2, 1, 1, 2, 2, 1, 3, 3, 2, 0, 2, 1, 2, 0};
+const int numDiags = 22;
+const int diags[numDiags][4] = {
+    {},
+    {},
+    {0},
+    {1},
+    {2},
+    {5, 3},
+    {6, 4},
+    {7, 20, 21},
+    {8, 19, 22},
+    {9, 18, 10, 23},
+    {11, 24},
+    {17, 12},
+    {16, 13},
+    {15, 14, 34, 33},
+    {35, 32},
+    {31},
+    {36, 30},
+    {37, 29},
+    {38, 28},
+    {27},
+    {26},
+    {25}};
+const int diagsSizes[numDiags] = {0, 0, 1, 1, 1, 2, 2, 3, 3, 4, 2, 2, 2, 4, 2, 1, 2, 2, 2, 1, 1, 1};
 
 // Define LEDs for opposite diagonal
 const int diagsBackwards[numDiags][5] = {
-    {},         // 0
-    {6, 7},     // 1
-    {5, 8},     // 2
-    {4, 9},     // 3
-    {},         // 4
-    {3, 10},    // 5
-    {2, 15},    // 6
-    {0, 1, 16}, // 7
-    {17},       // 8
-    {14, 18},   // 9
-    {13, 19},   // 10
-    {12},       // 11
-    {11},       // 12
-    {26, 27},   // 13
-    {25, 28},   // 14
-    {24, 29},   // 15
-    {},         // 16
-    {23, 30},   // 17
-    {22},       // 18
-    {20, 21},   // 19
-    {}          // 20
-};
-const int diagsBackwardsSizes[numDiags] = {0, 2, 2, 2, 0, 2, 2, 3, 1, 2, 2, 1, 1, 2, 2, 2, 0, 2, 1, 2, 0};
+    {5},
+    {6},
+    {7},
+    {8, 4},
+    {9, 3},
+    {2},
+    {1},
+    {0},
+    {17, 18},
+    {16, 19},
+    {15, 10, 20},
+    {11},
+    {14, 12, 21},
+    {13, 22},
+    {23},
+    {36, 35, 24},
+    {25, 37, 34},
+    {26, 38},
+    {27, 33},
+    {28, 32},
+    {29, 31},
+    {30}};
+const int diagsBackwardsSizes[numDiags] = {1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 3, 1, 3, 2, 1, 3, 3, 2, 2, 2, 2, 1};
 
 // Declare function definitions
 const int numberSelections = 11;
@@ -355,17 +355,17 @@ void colorLettersStatic(int hue)
   {
     if (millis() - timerLong > 5000 || firstTime)
     {
-      for (int i = 0; i < sizeC1; i++)
+      for (int i = 0; i < sizeLetter1; i++)
       {
-        leds[letterC1[i]].setHSV((96 + hue) % 0xff, 0xff, brightness);
+        leds[letter1[i]].setHSV((96 + hue) % 0xff, 0xff, brightness);
       }
-      for (int i = 0; i < sizeT; i++)
+      for (int i = 0; i < sizeLetter2; i++)
       {
-        leds[letterT[i]].setHSV((160 + hue) % 0xff, 0xff, brightness);
+        leds[letter2[i]].setHSV((160 + hue) % 0xff, 0xff, brightness);
       }
-      for (int i = 0; i < sizeC2; i++)
+      for (int i = 0; i < sizeLetter3; i++)
       {
-        leds[letterC2[i]].setHSV((96 + hue) % 0xff, 0xff, brightness);
+        leds[letter3[i]].setHSV((96 + hue) % 0xff, 0xff, brightness);
       }
       firstTime = false;
     }
@@ -576,17 +576,17 @@ void basicVUMeter(void)
   //   leds[i].setHSV(160, 0xff, 0x20);
   // }
 
-  for (int i = 0; i < sizeC1; i++)
+  for (int i = 0; i < sizeLetter1; i++)
   {
-    leds[letterC1[i]].setHSV(96, 0xff, 10);
+    leds[letter1[i]].setHSV(96, 0xff, 10);
   }
-  for (int i = 0; i < sizeT; i++)
+  for (int i = 0; i < sizeLetter2; i++)
   {
-    leds[letterT[i]].setHSV(160, 0xff, 20);
+    leds[letter2[i]].setHSV(160, 0xff, 20);
   }
-  for (int i = 0; i < sizeC2; i++)
+  for (int i = 0; i < sizeLetter3; i++)
   {
-    leds[letterC2[i]].setHSV(96, 0xff, 10);
+    leds[letter3[i]].setHSV(96, 0xff, 10);
   }
 }
 
