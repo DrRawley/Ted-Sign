@@ -16,9 +16,10 @@
 #define EEPROM_MIC_BASE_LEVEL_LOCATION 1
 float micBaseLevel = 3.0;
 float micScalingFactor = 10.0;
+int micOffset = 0;
 
 #define NUM_LEDS 39
-// #define BRIGHTNESS  64
+#define MAX_BRIGHTNESS 0xA0
 CRGB leds[NUM_LEDS];
 
 // Setup buttons
@@ -136,13 +137,15 @@ int getMicValue(void);
 void serialCheckAndSet(void);
 float setMicBaseLevel(float);
 float setMicScalingFactor(float);
+int setMicOffset(int);
 float getSerialFloat(void);
-void basicVUMeter(void);
-void intensityVUMeter(void);
+void basicVUMeter(int);
+void intensityVUMeter(int);
 
 void setup()
 {
   Serial.begin(9600);
+  randomSeed(analogRead(2));
   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
   button1.setDebounceTime(100);
   selection = EEPROM.read(0);
@@ -159,7 +162,12 @@ void setup()
   setMicScalingFactor(readValue);
   Serial.print("  Loaded mic scaling factor: ");
   Serial.println(micScalingFactor);
-  Serial.println("Enter b to set Mic Base Level.  Enter f to set Mic Scaling Factor.");
+  int readIntValue = 0;
+  EEPROM.get(EEPROM_MIC_BASE_LEVEL_LOCATION + sizeof(float) * 2, readIntValue);
+  setMicOffset(readIntValue);
+  Serial.print("  Loaded mic offset: ");
+  Serial.println(micOffset);
+  Serial.println("Enter 'b' to set Mic Base Level, 'f' to set Mic Scaling Factor, or 'o' to set Mic Offset.");
 }
 
 void loop()
@@ -176,7 +184,7 @@ void loop()
     {
       selection = 0;
     }
-    // EEPROM.update(0, selection);
+    EEPROM.update(0, selection);
   }
   potValue = (int)map(analogRead(POT_PIN), 0, 1024, 0, 0xff);
 
@@ -211,10 +219,10 @@ void loop()
     diagChase(potValue, 1); // 1 for backwards diagonals
     break;
   case 9:
-    basicVUMeter();
+    basicVUMeter(potValue);
     break;
   case 10:
-    intensityVUMeter();
+    intensityVUMeter(potValue);
     break;
   default:
     break;
@@ -256,7 +264,7 @@ void solid(int hue)
 void chase(int hue)
 {
   static int offset = 0;
-  static int iLimit = NUM_LEDS / 5 + 1;
+  static int iLimit = (int)(NUM_LEDS / 5) + 1;
   static unsigned long timer = millis();
   const int dither[] = {0x80, 0x60, 0x40, 0x20, 0x10};
 
@@ -415,24 +423,23 @@ void diagChase(int hue, int diagsDirection)
 int getMicValue(void)
 {
   int val = 0;
-  const int sampleSize = 256;
-  const byte shiftAmount = 8;
-  long accumulator = 0;
+  const int sampleSize = 32;
 
+  int max = 0;
+  int min = 1024;
   for (int i = 0; i < sampleSize; i++)
   {
     val = analogRead(MIC_PIN);
-    val = val - 512;
-    val = abs(val);
-    accumulator += val;
+    max = max(max, val);
+    min = min(min, val);
   }
-  int average = (int)(accumulator >> shiftAmount); // Fast divide by sampleSize by shifting shiftAmount bits.
-
-  if (average < 0)
+  int delta = max - min - micOffset;
+  if (delta > 0)
   {
-    average = 0;
+    return delta;
+  } else {
+    return 0;
   }
-  return average;
 }
 
 float setMicBaseLevel(float newMicBaseLevel)
@@ -450,6 +457,16 @@ float setMicScalingFactor(float newMicScalingFactor)
   if (newMicScalingFactor > 0)
   {
     micScalingFactor = newMicScalingFactor;
+  }
+
+  return micScalingFactor;
+}
+
+int setMicOffset(int newMicOffset)
+{
+  if (newMicOffset >= 0 && newMicOffset < 1024)
+  {
+    micOffset = newMicOffset;
   }
 
   return micScalingFactor;
@@ -508,7 +525,9 @@ void serialCheckAndSet()
       Serial.print(micBaseLevel);
       Serial.print("  Current mic scaling factor: ");
       Serial.println(micScalingFactor);
-      Serial.println("Enter b to set Mic Base Level.  Enter f to set Mic Scaling Factor.");
+      Serial.print("  Current mic offset: ");
+      Serial.println(micOffset);
+      Serial.println("Enter 'b' to set Mic Base Level, 'f' to set Mic Scaling Factor, or 'o' to set Mic Offset.");
     }
     if (option == 'b' || option == 'B')
     {
@@ -536,13 +555,27 @@ void serialCheckAndSet()
       Serial.print("New Mic Scaling Factor: ");
       Serial.println(result);
     }
+    if (option == 'o' || option == 'O')
+    {
+      Serial.print("Current mic offset: ");
+      Serial.println(micOffset);
+      Serial.print("Enter new mic offset factor: ");
+
+      int result = (int)getSerialFloat();
+      result = setMicOffset(result);
+      EEPROM.put(EEPROM_MIC_BASE_LEVEL_LOCATION + sizeof(float) * 2, micOffset);
+
+      Serial.print("New Mic Offset: ");
+      Serial.println(result);
+    }
   }
 }
 
-void basicVUMeter(void)
+void basicVUMeter(int hue)
 {
-  int numIntensities = numRows * 4;
+  int numIntensities = numColumns * 2; // 2 intensities per column
   int value = getMicValue();
+  // Serial.println(value);
 
   int intensity = (int)(micScalingFactor * log10((float)value / micBaseLevel));
 
@@ -555,42 +588,29 @@ void basicVUMeter(void)
     intensity = 0;
   }
 
-  const byte brightnessGradient[4] = {32, 64, 96, 128};
-  const byte colorGradient[5] = {0, 64, 96, 96, 96}; // red, yel, grn, grn, grn  // in this order because row 0 is the top row
+  const byte brightnessGradient[2] = {MAX_BRIGHTNESS / 2, MAX_BRIGHTNESS};
+  const byte colorGradient[8] = {96, 96, 96, 96, 96, 64, 0, 0}; // grn, ..., yel, red, red
   // Loop to set row color and brightness based off of intensity; only necessary to loop up to the intensity
   for (int i = 0; i < intensity; i++)
   {
-    int rowNumberIndex = 4 - (int)(i / 4); // Calc current row based on index --> 4 intensities per row
-    int brightness = brightnessGradient[i % 4];
+    int columnNumberIndex = (int)(i / 2); // Calc current column based on index --> 2 intensities per column
+    int brightness = brightnessGradient[i % 2];
 
-    for (int j = 0; j < rowSizes[rowNumberIndex]; j++) // Fill leds for current row
+    for (int j = 0; j < colSizes[columnNumberIndex]; j++) // Fill leds for current column
     {
-      leds[rows[rowNumberIndex][j]].setHSV(colorGradient[rowNumberIndex], 0xff, brightness);
+      leds[columns[columnNumberIndex][j]].setHSV(colorGradient[columnNumberIndex], 0xff, brightness);
     }
   }
 
   FastLED.show();
 
-  // for (int i = 0; i < NUM_LEDS; i++)
-  // {
-  //   leds[i].setHSV(160, 0xff, 0x20);
-  // }
-
-  for (int i = 0; i < sizeLetter1; i++)
+  for (int dot = 0; dot < NUM_LEDS; dot++)
   {
-    leds[letter1[i]].setHSV(96, 0xff, 10);
-  }
-  for (int i = 0; i < sizeLetter2; i++)
-  {
-    leds[letter2[i]].setHSV(160, 0xff, 20);
-  }
-  for (int i = 0; i < sizeLetter3; i++)
-  {
-    leds[letter3[i]].setHSV(96, 0xff, 10);
+    leds[dot].setHSV(hue, 0xff, 0x10);
   }
 }
 
-void intensityVUMeter(void)
+void intensityVUMeter(int hue)
 {
   int numIntensities = 20;
   int value = getMicValue();
@@ -606,10 +626,12 @@ void intensityVUMeter(void)
     intensity = 0;
   }
 
+  // int intensity = (int)map(value, 0, 1024, 0, numIntensities - 1);
+
   int brightness = 0;
-  brightness = (0x80 - 0x10) * intensity / numIntensities + 0x10;
-  int hue = 0;
-  hue = (85 - 160) * intensity / numIntensities + 160;
+  brightness = (MAX_BRIGHTNESS - 0x10) * intensity / numIntensities + 0x10;
+  // int hue = 0;
+  // hue = (85 - 160) * intensity / numIntensities + 160;
 
   for (int i = 0; i < NUM_LEDS; i++)
   {
