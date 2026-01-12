@@ -192,7 +192,7 @@ void loop()
   {
   case 0:
     // colorLettersStatic(potValue);
-    colorLettersStatic(0); // Make zero so that it stays on green-blue-green
+    colorLettersStatic(potValue); // Make zero so that it stays on green-blue-green
     break;
   case 1:
     solid(potValue);
@@ -355,27 +355,21 @@ void colorLettersStatic(int hue)
 {
   static int offset = 0;
   static unsigned long timer = millis();
-  static unsigned long timerLong = millis();
-  static bool firstTime = true;
   static int brightness = 0x40;
 
   if (millis() - timer > 200)
   {
-    if (millis() - timerLong > 5000 || firstTime)
+    for (int i = 0; i < sizeLetter1; i++)
     {
-      for (int i = 0; i < sizeLetter1; i++)
-      {
-        leds[letter1[i]].setHSV((96 + hue) % 0xff, 0xff, brightness);
-      }
-      for (int i = 0; i < sizeLetter2; i++)
-      {
-        leds[letter2[i]].setHSV((160 + hue) % 0xff, 0xff, brightness);
-      }
-      for (int i = 0; i < sizeLetter3; i++)
-      {
-        leds[letter3[i]].setHSV((96 + hue) % 0xff, 0xff, brightness);
-      }
-      firstTime = false;
+      leds[letter1[i]].setHSV((0 + hue) % 0xff, 0xff, brightness); // 0 = red
+    }
+    for (int i = 0; i < sizeLetter2; i++)
+    {
+      leds[letter2[i]].setHSV((85 + hue) % 0xff, 0xff, brightness); // 85 = green
+    }
+    for (int i = 0; i < sizeLetter3; i++)
+    {
+      leds[letter3[i]].setHSV((171 + hue) % 0xff, 0xff, brightness); // 171 = blue
     }
 
     FastLED.show();
@@ -437,7 +431,9 @@ int getMicValue(void)
   if (delta > 0)
   {
     return delta;
-  } else {
+  }
+  else
+  {
     return 0;
   }
 }
