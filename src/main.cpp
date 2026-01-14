@@ -19,7 +19,7 @@ float micScalingFactor = 10.0;
 int micOffset = 0;
 
 #define NUM_LEDS 39
-#define MAX_BRIGHTNESS 0xA0
+#define MAX_BRIGHTNESS 0x64
 CRGB leds[NUM_LEDS];
 
 // Setup buttons
@@ -122,13 +122,12 @@ const int diagsBackwards[numDiags][5] = {
 const int diagsBackwardsSizes[numDiags] = {1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 3, 1, 3, 2, 1, 3, 3, 2, 2, 2, 2, 1};
 
 // Declare function definitions
-const int numberSelections = 11;
+const int numberSelections = 10;
 void solid(int hue);
 void colorLettersStatic(int hue);
-void backAndForth(int hue);
 void chase(int hue);
 void verticalChase(int hue);
-void verticalRainbow(void);
+void verticalRainbow(byte potValue);
 void horizontalChase(int hue);
 void diagChase(int hue, int diagsDirection);
 
@@ -198,57 +197,31 @@ void loop()
     solid(potValue);
     break;
   case 2:
-    backAndForth(potValue);
-    break;
-  case 3:
     chase(potValue);
     break;
-  case 4:
+  case 3:
     verticalChase(potValue);
     break;
-  case 5:
-    verticalRainbow();
+  case 4:
+    verticalRainbow(potValue);
     break;
-  case 6:
+  case 5:
     horizontalChase(potValue);
     break;
-  case 7:
+  case 6:
     diagChase(potValue, 0);
     break;
-  case 8:
+  case 7:
     diagChase(potValue, 1); // 1 for backwards diagonals
     break;
-  case 9:
+  case 8:
     basicVUMeter(potValue);
     break;
-  case 10:
+  case 9:
     intensityVUMeter(potValue);
     break;
   default:
     break;
-  }
-}
-
-void backAndForth(int hue)
-{
-  for (int dot = 0; dot < NUM_LEDS; dot++)
-  {
-    leds[dot] = CHSV(hue, 0xff, 0x60);
-    FastLED.show();
-    // clear this led for the next time around the loop
-    leds[dot] = CRGB::Black;
-    // delay(10);
-  }
-
-  for (int dot = 0; dot < NUM_LEDS; dot++)
-  {
-
-    leds[NUM_LEDS - dot - 1] = CHSV(hue, 0xff, 0x60);
-
-    FastLED.show();
-    // clear this led for the next time around the loop
-    leds[NUM_LEDS - dot - 1] = CRGB::Black;
-    // delay(10);
   }
 }
 
@@ -264,20 +237,31 @@ void solid(int hue)
 void chase(int hue)
 {
   static int offset = 0;
-  static int iLimit = (int)(NUM_LEDS / 5) + 1;
+  const byte ditherSize = 8;
+  static byte iLimit = (byte)(NUM_LEDS / ditherSize) + 1;
   static unsigned long timer = millis();
-  const int dither[] = {0x80, 0x60, 0x40, 0x20, 0x10};
+  const float logDithersize = log10((float)(ditherSize + 1));
+  const byte dither[ditherSize] =
+      {
+          (byte)(MAX_BRIGHTNESS),
+          (byte)(MAX_BRIGHTNESS * log10(ditherSize - 1) / logDithersize),
+          (byte)(MAX_BRIGHTNESS * log10(ditherSize - 2) / logDithersize),
+          (byte)(MAX_BRIGHTNESS * log10(ditherSize - 3) / logDithersize),
+          (byte)(MAX_BRIGHTNESS * log10(ditherSize - 4) / logDithersize),
+          (byte)(MAX_BRIGHTNESS * log10(ditherSize - 5) / logDithersize),
+          (byte)(MAX_BRIGHTNESS * log10(ditherSize - 6) / logDithersize),
+          (byte)(MAX_BRIGHTNESS * log10(ditherSize - 7) / logDithersize)};
 
-  if (millis() - timer > 200)
+  if (millis() - timer > 100)
   {
     for (int i = 0; i < iLimit; i++)
     {
-      for (int j = 0; j < 5; j++)
+      for (int j = 0; j < ditherSize; j++)
       {
-        int index = i * 5 + j;
+        int index = i * ditherSize + j;
         if (index < NUM_LEDS) // Make sure not writing outside of length of leds[]
         {
-          leds[i * 5 + j].setHSV(hue, 0xff, dither[(5 - j + offset) % 5]); // this index was annoying
+          leds[i * ditherSize + j].setHSV(hue, 0xff, dither[(ditherSize - j + offset) % ditherSize]); // this index was annoying
         }
       }
     }
@@ -309,18 +293,19 @@ void verticalChase(int hue)
   }
 }
 
-void verticalRainbow(void)
+void verticalRainbow(byte potValue)
 {
   static int offset = 0;
   static unsigned long timer = millis();
+  int unsigned delay = map(potValue, 0, 255, 20, 2000);
 
-  if (millis() - timer > 100)
+  if (millis() - timer > delay)
   {
     for (int i = 0; i < numColumns; i++)
     {
       for (int j = 0; j < colSizes[i]; j++)
       {
-        leds[columns[i][j]].setHSV((i + offset + 5) % 255, 0xff, 0x40);
+        leds[columns[i][j]].setHSV((i * 10 + offset) % 255, 0xff, 0x40);
       }
     }
     FastLED.show();
@@ -465,7 +450,7 @@ int setMicOffset(int newMicOffset)
     micOffset = newMicOffset;
   }
 
-  return micScalingFactor;
+  return micOffset;
 }
 
 float getSerialFloat(void)
@@ -569,9 +554,9 @@ void serialCheckAndSet()
 
 void basicVUMeter(int hue)
 {
-  int numIntensities = numColumns * 2; // 2 intensities per column
+  // int numIntensities = numColumns * 2; // 2 intensities per column
+  int numIntensities = numRows * 4;
   int value = getMicValue();
-  // Serial.println(value);
 
   int intensity = (int)(micScalingFactor * log10((float)value / micBaseLevel));
 
@@ -583,18 +568,23 @@ void basicVUMeter(int hue)
   {
     intensity = 0;
   }
+  Serial.print(value);
+  Serial.print(" - ");
+  Serial.println(intensity);
 
-  const byte brightnessGradient[2] = {MAX_BRIGHTNESS / 2, MAX_BRIGHTNESS};
-  const byte colorGradient[8] = {96, 96, 96, 96, 96, 64, 0, 0}; // grn, ..., yel, red, red
+  // const byte brightnessGradient[4] = {32, 64, 96, 128};
+  const byte brightnessGradient[4] = {MAX_BRIGHTNESS / 4, MAX_BRIGHTNESS / 2, MAX_BRIGHTNESS * 3 / 4, MAX_BRIGHTNESS};
+  const byte colorGradient[6] = {96, 96, 96, 96, 64, 0}; // grn, grn, grn, grn, yellow, red
   // Loop to set row color and brightness based off of intensity; only necessary to loop up to the intensity
   for (int i = 0; i < intensity; i++)
   {
-    int columnNumberIndex = (int)(i / 2); // Calc current column based on index --> 2 intensities per column
-    int brightness = brightnessGradient[i % 2];
+    // int rowNumberIndex = 4 - (int)(i / 4); // Calc current row based on index --> 4 intensities per row
+    int rowNumberIndex = (int)(i / 4);
+    int brightness = brightnessGradient[i % 4];
 
-    for (int j = 0; j < colSizes[columnNumberIndex]; j++) // Fill leds for current column
+    for (int j = 0; j < rowSizes[rowNumberIndex]; j++) // Fill leds for current row
     {
-      leds[columns[columnNumberIndex][j]].setHSV(colorGradient[columnNumberIndex], 0xff, brightness);
+      leds[rows[rowNumberIndex][j]].setHSV(colorGradient[rowNumberIndex], 0xff, brightness);
     }
   }
 
