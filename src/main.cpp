@@ -27,19 +27,10 @@ ezButton button1(SELECT_BUTTON_PIN);
 
 byte selection = 0;
 
-// Dither Array Setup
-const byte ditherSize = 8;
-const float logDithersize = log10((float)(ditherSize + 1));
-const byte dither[ditherSize] =
-    {
-        (byte)(MAX_BRIGHTNESS),
-        (byte)(MAX_BRIGHTNESS * log10(ditherSize - 1) / logDithersize),
-        (byte)(MAX_BRIGHTNESS * log10(ditherSize - 2) / logDithersize),
-        (byte)(MAX_BRIGHTNESS * log10(ditherSize - 3) / logDithersize),
-        (byte)(MAX_BRIGHTNESS * log10(ditherSize - 4) / logDithersize),
-        (byte)(MAX_BRIGHTNESS * log10(ditherSize - 5) / logDithersize),
-        (byte)(MAX_BRIGHTNESS * log10(ditherSize - 6) / logDithersize),
-        (byte)(MAX_BRIGHTNESS * log10(ditherSize - 7) / logDithersize)};
+// Dither Array Definition
+const byte ditherSize = 12;
+byte dither[ditherSize];
+
 
 // Define LEDs per Letter
 const int letter1[10] = {5, 6, 7, 8, 9, 4, 3, 2, 1, 0};
@@ -161,6 +152,23 @@ void setup()
   randomSeed(analogRead(2));
   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
   button1.setDebounceTime(100);
+
+  // Calculate dither array
+  const float logDithersize = log10((float)(ditherSize + 1));
+  // byte dither[ditherSize] =
+  //     {
+  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 0) / logDithersize),
+  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 1) / logDithersize),
+  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 2) / logDithersize),
+  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 3) / logDithersize),
+  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 4) / logDithersize),
+  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 5) / logDithersize),
+  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 6) / logDithersize),
+  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 7) / logDithersize)};
+  for (byte i = 0; i < ditherSize; i++) {
+    dither[i] = (byte)(MAX_BRIGHTNESS * log10(ditherSize - i) / logDithersize);
+  }
+
   selection = EEPROM.read(0);
   if (!(selection < numberSelections))
   {
