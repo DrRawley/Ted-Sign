@@ -127,7 +127,7 @@ const int diagsBackwards[numDiags][5] = {
 const int diagsBackwardsSizes[numDiags] = {1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 3, 1, 3, 2, 1, 3, 3, 2, 2, 2, 2, 1};
 
 // Declare function definitions
-const int numberSelections = 10;
+const int numberSelections = 11;
 void solid(byte hue);
 void colorLettersStatic(byte hue);
 void chase(byte hue);
@@ -135,6 +135,7 @@ void verticalChase(byte hue);
 void verticalRainbow(byte potValue);
 void horizontalChase(byte hue);
 void diagChase(byte hue, byte diagsDirection);
+void randomLights(byte potValue);
 
 // Function definitions for audio input
 int getMicValue(void);
@@ -212,7 +213,6 @@ void loop()
   switch (selection)
   {
   case 0:
-    // colorLettersStatic(potValue);
     colorLettersStatic(potValue); // Make zero so that it stays on green-blue-green
     break;
   case 1:
@@ -228,18 +228,21 @@ void loop()
     verticalRainbow(potValue);
     break;
   case 5:
-    horizontalChase(potValue);
+    randomLights(potValue);
     break;
   case 6:
-    diagChase(potValue, 0);
+    horizontalChase(potValue);
     break;
   case 7:
-    diagChase(potValue, 1); // 1 for backwards diagonals
+    diagChase(potValue, 0);
     break;
   case 8:
-    basicVUMeter(potValue);
+    diagChase(potValue, 1); // 1 for backwards diagonals
     break;
   case 9:
+    basicVUMeter(potValue);
+    break;
+  case 10:
     intensityVUMeter(potValue);
     break;
   default:
@@ -318,6 +321,25 @@ void verticalRainbow(byte potValue)
     }
     FastLED.show();
     offset++;
+    timer = millis();
+  }
+}
+
+void randomLights(byte potValue)
+{
+  static bool firstTime = true;
+  static unsigned long timer = millis();
+  int unsigned delay = map(potValue, 0, 255, 100, 5000);
+  if ((millis() - timer > delay) || firstTime)
+  {
+    firstTime = false;
+    for (byte dot = 0; dot < NUM_LEDS; dot++)
+    {
+      byte hue = (byte)random(256);
+
+      leds[dot] = CHSV(hue, 0xff, MAX_BRIGHTNESS / 2);
+    }
+    FastLED.show();
     timer = millis();
   }
 }
