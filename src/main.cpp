@@ -137,13 +137,13 @@ const int diagsBackwardsSizes[numDiags] = {1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 3, 1, 3
 
 // Declare function definitions
 const int numberSelections = 10;
-void solid(int hue);
-void colorLettersStatic(int hue);
-void chase(int hue);
-void verticalChase(int hue);
+void solid(byte hue);
+void colorLettersStatic(byte hue);
+void chase(byte hue);
+void verticalChase(byte hue);
 void verticalRainbow(byte potValue);
-void horizontalChase(int hue);
-void diagChase(int hue, int diagsDirection);
+void horizontalChase(byte hue);
+void diagChase(byte hue, byte diagsDirection);
 
 // Function definitions for audio input
 int getMicValue(void);
@@ -239,7 +239,7 @@ void loop()
   }
 }
 
-void solid(int hue)
+void solid(byte hue)
 {
   for (int dot = 0; dot < NUM_LEDS; dot++)
   {
@@ -248,23 +248,11 @@ void solid(int hue)
   FastLED.show();
 }
 
-void chase(int hue)
+void chase(byte hue)
 {
   static int offset = 0;
-  // const byte ditherSize = 8;
   static byte iLimit = (byte)(NUM_LEDS / ditherSize) + 1;
   static unsigned long timer = millis();
-  // const float logDithersize = log10((float)(ditherSize + 1));
-  // const byte dither[ditherSize] =
-  //     {
-  //         (byte)(MAX_BRIGHTNESS),
-  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 1) / logDithersize),
-  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 2) / logDithersize),
-  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 3) / logDithersize),
-  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 4) / logDithersize),
-  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 5) / logDithersize),
-  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 6) / logDithersize),
-  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 7) / logDithersize)};
 
   if (millis() - timer > 100)
   {
@@ -285,12 +273,10 @@ void chase(int hue)
   }
 }
 
-void verticalChase(int hue)
+void verticalChase(byte hue)
 {
   static int offset = 0;
   static unsigned long timer = millis();
-  //const int dither[] = {0x80, 0x60, 0x40, 0x20, 0x10};
-  // int ditherInx = 0;
 
   if (millis() - timer > 100)
   {
@@ -328,12 +314,10 @@ void verticalRainbow(byte potValue)
   }
 }
 
-void horizontalChase(int hue)
+void horizontalChase(byte hue)
 {
   static int offset = 0;
   static unsigned long timer = millis();
-  //const int dither[] = {0x80, 0x60, 0x40, 0x20, 0x10};
-  // int ditherInx = 0;
 
   if (millis() - timer > 100)
   {
@@ -350,7 +334,7 @@ void horizontalChase(int hue)
   }
 }
 
-void colorLettersStatic(int hue)
+void colorLettersStatic(byte hue)
 {
   static int offset = 0;
   static unsigned long timer = millis();
@@ -376,11 +360,10 @@ void colorLettersStatic(int hue)
   }
 }
 
-void diagChase(int hue, int diagsDirection)
+void diagChase(byte hue, byte diagsDirection)
 {
   static int offset = 0;
   static unsigned long timer = millis();
-  //const int dither[] = {0x80, 0x60, 0x40, 0x20, 0x10};
   int size = 0;
 
   if (millis() - timer > 100)
