@@ -27,6 +27,20 @@ ezButton button1(SELECT_BUTTON_PIN);
 
 byte selection = 0;
 
+// Dither Array Setup
+const byte ditherSize = 8;
+const float logDithersize = log10((float)(ditherSize + 1));
+const byte dither[ditherSize] =
+    {
+        (byte)(MAX_BRIGHTNESS),
+        (byte)(MAX_BRIGHTNESS * log10(ditherSize - 1) / logDithersize),
+        (byte)(MAX_BRIGHTNESS * log10(ditherSize - 2) / logDithersize),
+        (byte)(MAX_BRIGHTNESS * log10(ditherSize - 3) / logDithersize),
+        (byte)(MAX_BRIGHTNESS * log10(ditherSize - 4) / logDithersize),
+        (byte)(MAX_BRIGHTNESS * log10(ditherSize - 5) / logDithersize),
+        (byte)(MAX_BRIGHTNESS * log10(ditherSize - 6) / logDithersize),
+        (byte)(MAX_BRIGHTNESS * log10(ditherSize - 7) / logDithersize)};
+
 // Define LEDs per Letter
 const int letter1[10] = {5, 6, 7, 8, 9, 4, 3, 2, 1, 0};
 const int letter2[15] = {17, 16, 15, 18, 14, 19, 10, 11, 12, 13, 20, 21, 22, 23, 24};
@@ -237,20 +251,20 @@ void solid(int hue)
 void chase(int hue)
 {
   static int offset = 0;
-  const byte ditherSize = 8;
+  // const byte ditherSize = 8;
   static byte iLimit = (byte)(NUM_LEDS / ditherSize) + 1;
   static unsigned long timer = millis();
-  const float logDithersize = log10((float)(ditherSize + 1));
-  const byte dither[ditherSize] =
-      {
-          (byte)(MAX_BRIGHTNESS),
-          (byte)(MAX_BRIGHTNESS * log10(ditherSize - 1) / logDithersize),
-          (byte)(MAX_BRIGHTNESS * log10(ditherSize - 2) / logDithersize),
-          (byte)(MAX_BRIGHTNESS * log10(ditherSize - 3) / logDithersize),
-          (byte)(MAX_BRIGHTNESS * log10(ditherSize - 4) / logDithersize),
-          (byte)(MAX_BRIGHTNESS * log10(ditherSize - 5) / logDithersize),
-          (byte)(MAX_BRIGHTNESS * log10(ditherSize - 6) / logDithersize),
-          (byte)(MAX_BRIGHTNESS * log10(ditherSize - 7) / logDithersize)};
+  // const float logDithersize = log10((float)(ditherSize + 1));
+  // const byte dither[ditherSize] =
+  //     {
+  //         (byte)(MAX_BRIGHTNESS),
+  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 1) / logDithersize),
+  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 2) / logDithersize),
+  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 3) / logDithersize),
+  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 4) / logDithersize),
+  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 5) / logDithersize),
+  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 6) / logDithersize),
+  //         (byte)(MAX_BRIGHTNESS * log10(ditherSize - 7) / logDithersize)};
 
   if (millis() - timer > 100)
   {
@@ -275,7 +289,7 @@ void verticalChase(int hue)
 {
   static int offset = 0;
   static unsigned long timer = millis();
-  const int dither[] = {0x80, 0x60, 0x40, 0x20, 0x10};
+  //const int dither[] = {0x80, 0x60, 0x40, 0x20, 0x10};
   // int ditherInx = 0;
 
   if (millis() - timer > 100)
@@ -284,7 +298,7 @@ void verticalChase(int hue)
     {
       for (int j = 0; j < colSizes[i]; j++)
       {
-        leds[columns[i][j]].setHSV(hue, 0xff, dither[(5 - i % 5 + offset) % 5]);
+        leds[columns[i][j]].setHSV(hue, 0xff, dither[(ditherSize - i % ditherSize + offset) % ditherSize]);
       }
     }
     FastLED.show();
@@ -318,7 +332,7 @@ void horizontalChase(int hue)
 {
   static int offset = 0;
   static unsigned long timer = millis();
-  const int dither[] = {0x80, 0x60, 0x40, 0x20, 0x10};
+  //const int dither[] = {0x80, 0x60, 0x40, 0x20, 0x10};
   // int ditherInx = 0;
 
   if (millis() - timer > 100)
@@ -327,7 +341,7 @@ void horizontalChase(int hue)
     {
       for (int j = 0; j < rowSizes[i]; j++)
       {
-        leds[rows[i][j]].setHSV(hue, 0xff, dither[(5 - i % 5 + offset) % 5]);
+        leds[rows[i][j]].setHSV(hue, 0xff, dither[(ditherSize - i % ditherSize + offset) % ditherSize]);
       }
     }
     FastLED.show();
@@ -366,7 +380,7 @@ void diagChase(int hue, int diagsDirection)
 {
   static int offset = 0;
   static unsigned long timer = millis();
-  const int dither[] = {0x80, 0x60, 0x40, 0x20, 0x10};
+  //const int dither[] = {0x80, 0x60, 0x40, 0x20, 0x10};
   int size = 0;
 
   if (millis() - timer > 100)
@@ -385,11 +399,11 @@ void diagChase(int hue, int diagsDirection)
       {
         if (diagsDirection == 0)
         {
-          leds[diags[i][j]].setHSV(hue, 0xff, dither[(5 - i % 5 + offset) % 5]);
+          leds[diags[i][j]].setHSV(hue, 0xff, dither[(ditherSize - i % ditherSize + offset) % ditherSize]);
         }
         else
         {
-          leds[diagsBackwards[i][j]].setHSV(hue, 0xff, dither[(5 - i % 5 + offset) % 5]);
+          leds[diagsBackwards[i][j]].setHSV(hue, 0xff, dither[(ditherSize - i % ditherSize + offset) % ditherSize]);
         }
       }
     }
