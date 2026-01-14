@@ -127,7 +127,7 @@ const int diagsBackwards[numDiags][5] = {
 const int diagsBackwardsSizes[numDiags] = {1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 3, 1, 3, 2, 1, 3, 3, 2, 2, 2, 2, 1};
 
 // Declare function definitions
-const int numberSelections = 11;
+const int numberSelections = 12;
 void solid(byte hue);
 void colorLettersStatic(byte hue);
 void chase(byte hue);
@@ -136,6 +136,8 @@ void verticalRainbow(byte potValue);
 void horizontalChase(byte hue);
 void diagChase(byte hue, byte diagsDirection);
 void randomLights(byte potValue);
+void yellowToWhite(byte potValue);
+
 
 // Function definitions for audio input
 int getMicValue(void);
@@ -244,6 +246,9 @@ void loop()
     break;
   case 10:
     intensityVUMeter(potValue);
+    break;
+  case 11:
+    yellowToWhite(potValue);
     break;
   default:
     break;
@@ -424,6 +429,19 @@ void diagChase(byte hue, byte diagsDirection)
     offset++;
     timer = millis();
   }
+}
+
+
+void yellowToWhite(byte potValue)
+{
+  byte saturation = (byte)map(potValue, 0, 255, 255, 32);
+  byte brightness = (byte)map(potValue, 0, 255, 40, 160);
+  
+  for (byte dot = 0; dot < NUM_LEDS; dot++)
+  {
+    leds[dot].setHSV(32, saturation, brightness); //old value 38
+  }
+  FastLED.show();
 }
 
 int getMicValue(void)
